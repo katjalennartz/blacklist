@@ -37,7 +37,7 @@ function blacklist_install()
   $db->write_query("CREATE TABLE `" . TABLE_PREFIX . "blacklist` (
     `bid` int(10) NOT NULL AUTO_INCREMENT,
     `uid` int(10) NOT NULL,
-    `username` varchar(50) NOT NULL 
+    `username` varchar(50) NOT NULL,
     `strokes_cnt` int(10) NOT NULL,
     `stroke_date_last` int(1) NOT NULL DEFAULT 1,
     PRIMARY KEY (`bid`)
