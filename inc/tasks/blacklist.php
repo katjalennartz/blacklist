@@ -73,7 +73,7 @@ function task_blacklist($task)
 
             //Der Charakter ist Bewerber oder wartet auf aktivierung
             //TODO Bewerbergruppe dynamisch
-            if ($user['usergroup'] == $opt_bewerber || $user['usergroup'] == 5) {
+            if ($user['usergroup'] == $opt_bewerber || $user['usergroup'] == $opt_bewerber) {
                 $regdate = gmdate("Y-m-d H:i:s", $user['regdate']);
                 //Hole Threads aus der Bewerber area 
                 $get_stecki = $db->write_query("
@@ -156,7 +156,7 @@ function task_blacklist($task)
                     $steckidate = $db->fetch_array($db->write_query("SELECT * FROM 
                     (SElECT uid, username, fid, tid, dateline FROM  " . TABLE_PREFIX . "threads WHERE uid = {$uid} AND visible != '-2') as up 
                       INNER JOIN
-                    (SELECT fid FROM " . TABLE_PREFIX . "forums WHERE concat(',',parentlist,',') LIKE '%,17,%') as fids
+                    (SELECT fid FROM " . TABLE_PREFIX . "forums WHERE concat(',',parentlist,',') LIKE '%,{$opt_steckiarea},%') as fids
                     ON fids.fid = up.fid
                     LIMIT 1"));
                     $stecki = new DateTime();

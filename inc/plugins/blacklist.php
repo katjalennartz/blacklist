@@ -11,6 +11,8 @@
 // error_reporting ( -1 );
 // ini_set ( 'display_errors', true ); 
 
+//TODO SETTINGS auf eis nein
+
 // Disallow direct access to this file for security reasons
 if (!defined("IN_MYBB")) {
   die("Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.");
@@ -37,18 +39,18 @@ function blacklist_install()
   $db->write_query("CREATE TABLE `" . TABLE_PREFIX . "blacklist` (
     `bid` int(10) NOT NULL AUTO_INCREMENT,
     `uid` int(10) NOT NULL,
-    `username` varchar(50) NOT NULL,
+    `username` varchar(50) NOT NULL 
     `strokes_cnt` int(10) NOT NULL,
     `stroke_date_last` int(1) NOT NULL DEFAULT 1,
     PRIMARY KEY (`bid`)
 ) ENGINE=MyISAM CHARACTER SET utf8 COLLATE utf8_general_ci;");
-  if (!$db->field_exists("blacklist_view", "threads")) {
+  if (!$db->field_exists("blacklist_view", "users")) {
     $db->add_column("users", "blacklist_view", "INT(1) NOT NULL default '1'");
   }
-  if (!$db->field_exists("blacklist_ice", "threads")) {
-    $db->add_column("users", "blacklist_ice", "INT(1) NOT NULL default '1'");
+  if (!$db->field_exists("blacklist_ice", "users")) {
+    $db->add_column("users", "blacklist_ice", "INT(1) NOT NULL default '0'");
   }
-  if (!$db->field_exists("blacklist_ice_date", "threads")) {
+  if (!$db->field_exists("blacklist_ice_date", "users")) {
     $db->add_column("users", "blacklist_ice_date", "datetime NOT NULL");
   }
 
@@ -536,7 +538,7 @@ function blacklist_usercp_show()
     $user = get_user($uid);
     //TODO Bewerbergruppe dynamisch machen
     //Bewerber:
-    if ($user['usergroup'] == $opt_bewerber || $user['usergroup'] == 5) {
+    if ($user['usergroup'] == $opt_bewerber || $user['usergroup'] == $opt_bewerber) {
       //Registrierungsdatum im richtigen format
       $regdate = gmdate("Y-m-d H:i:s", $user['regdate']);
       // schauen ob es einen post vom user in der steckiarea gibt
