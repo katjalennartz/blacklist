@@ -6,10 +6,15 @@
  * Blacklist plugin for MyBB 1.8
  * Automatische Anzeige der BL 
  * Aktualisierung des Feldes, BL Warnung ausblenden 
+ *
  */
 // error_reporting(-1);
 // ini_set('display_errors', true);
 
+/***
+ * all the magic 
+ * 
+ */
 function task_blacklist($task)
 {
     global $db, $mybb, $lang;
@@ -24,20 +29,25 @@ function task_blacklist($task)
     $opt_bewerber_days = intval($mybb->settings['blacklist_bewerberdauer']);
     $opt_steckiarea = intval($mybb->settings['blacklist_bewerberfid']);
 
-    //Archiv ja/Nein?
+
+    $build_string = "";
+    
+    //gelten posts im Archiv ja/Nein?
     if ($opt_bl_archiv == 0) {
         $archiv = "";
     } else {
         $archiv =  " OR concat(',',parentlist,',') LIKE '%," . $opt_bl_archiv . ",%'";
     }
-    //get groups
+    //ausgeschlossene gruppen
     $gids = explode(',', $mybb->settings['blacklist_excluded']);
 
     $today = new DateTime(date("Y-m-d H:i:s"));
+    //alle user des boards
     $get_user = $db->simple_select("users", "*");
 
     while ($user = $db->fetch_array($get_user)) {
         $usergroup =  $user['usergroup'];
+        //nur die gruppen die wir wollen
         if (!in_array($usergroup, $gids)) {
             $uid = $user['uid'];
             $username =  $user['username'];
@@ -47,8 +57,8 @@ function task_blacklist($task)
             if ($user['blacklist_ice_date'] != "0000-00-00 00:00:00") {
                 $icedate  = new DateTime(date($user['blacklist_ice_date']));
                 $interval = (array) date_diff($icedate, $today);
-                // Ist er länger als 3 Monate auf Eis -> setze ihn wieder aktiv
 
+                // Ist er länger als 3 Monate auf Eis -> setze ihn automatisch wieder aktiv
                 if ($interval['days'] > 91) {
                     $db->write_query("UPDATE " . TABLE_PREFIX . "users SET blacklist_ice = 0 WHERE uid = {$uid}");
                 }
@@ -62,6 +72,7 @@ function task_blacklist($task)
             $flag = $db->num_rows($db->simple_select("blacklist", "uid", "uid = {$uid}"));
 
             //Der Charakter ist Bewerber oder wartet auf aktivierung
+            //TODO Bewerbergruppe dynamisch
             if ($user['usergroup'] == $opt_bewerber || $user['usergroup'] == 5) {
                 $regdate = gmdate("Y-m-d H:i:s", $user['regdate']);
                 //Hole Threads aus der Bewerber area 
