@@ -170,24 +170,6 @@ function blacklist_install()
   }
   rebuild_settings();
 
-  //Task, der einmal im Monat -> angegeben in Settins bl_info wieder zurücksetzt. 
-  $db->insert_query('tasks', array(
-    'title' => 'Blacklist Meldung',
-    'description' => 'An einem festgelegten Tag die Blacklist ausführen',
-    'file' => 'blacklist',
-    'minute' => '1',
-    'hour' => '0',
-    'day' => '1',
-    'month' => '*',
-    'weekday' => '*',
-    'nextrun' => TIME_NOW,
-    'lastrun' => 0,
-    'enabled' => 1,
-    'logging' => 1,
-    'locked' => 0,
-  ));
-  $cache->update_tasks();
-
   $templategrouparray = array(
     'prefix' => 'blacklist',
     'title'  => $db->escape_string('Blacklist'),
@@ -416,7 +398,7 @@ function blacklist_install()
 
   //Task, der einmal im Monat -> angegeben in Settins bl_info wieder zurücksetzt. 
   $db->insert_query('tasks', array(
-    'title' => 'Blacklist',
+    'title' => 'blacklist',
     'description' => 'Stellt einmal im Monat die Blacklist zusammen.',
     'file' => 'setHauspunkte',
     'minute' => '01',
@@ -498,9 +480,7 @@ function blacklist_deactivate()
   $db->update_query('tasks', array('enabled' => 0), "file = 'blacklist'");
 }
 
-//Das Datum der Tasks anpassen, wenn im Adminbereich etwas geändert wird
-//-> Wann wird die Warnung für alle User wieder angezeigt, auch wenn sie die zwischenzeitlich ausgeblendet haben. Also zum Beispiel eine woche vor der Blacklist
-//Ausnahme: Der User wünscht ausdrücklich keine Warnung bei keinem Charakter
+
 $plugins->add_hook("admin_config_settings_change", "blacklist_editTask");
 function blacklist_editTask()
 {
@@ -515,7 +495,7 @@ function blacklist_usercp_show()
 {
   global $db, $mybb, $templates, $blacklist_ucp;
 
-
+  //Get Settings
   $opt_bl_days = intval($mybb->settings['blacklist_duration']); //Zeitraum
   $opt_bl_ingame = intval($mybb->settings['blacklist_ingame']);
   $opt_bl_archiv = intval($mybb->settings['blacklist_archiv']);
@@ -534,27 +514,30 @@ function blacklist_usercp_show()
 
   $thisuser = $mybb->user['uid'];
   $charas = get_allcharsBL($thisuser);
-  // $today = new DateTime();
-  $today = new DateTime(date("Y-m-d H:i:s"));
-  foreach ($charas as $uid => $username) {
-    //Welche Benutzer gruppe? 
-    $user = get_user($uid);
 
+  $today = new DateTime(date("Y-m-d H:i:s"));
+  //Alle benutzer durchgehen
+  foreach ($charas as $uid => $username) {
+    //Welcher Benutzer gruppe? 
+    $user = get_user($uid);
+    //TODO Bewerbergruppe dynamisch machen
+    //Bewerber:
     if ($user['usergroup'] == $opt_bewerber || $user['usergroup'] == 5) {
-      // schauen ob es einen post vom user in der steckiarea gibt
+      //Registrierungsdatum im richtigen format
       $regdate = gmdate("Y-m-d H:i:s", $user['regdate']);
+      // schauen ob es einen post vom user in der steckiarea gibt
       $get_stecki = $db->write_query("
                         SELECT *, datediff(FROM_UNIXTIME(dateline), '{$regdate}' ) as diff FROM 
                         " . TABLE_PREFIX . "threads WHERE uid = {$uid} and fid = {$opt_steckiarea}
                         ");
       //in Array umwandeln mit dem wir arbeiten können
       $stecki = $db->fetch_array($get_stecki);
-
+      //es gab einen steckbrief (ergebnis des queries größer als null) 
       if ($db->num_rows($get_stecki) > 0) {
         //es gibt einen erledigten beitrag in der bewerbungsares
         if ($stecki['threadsolved'] == 1) {
           //tu nichts
-          //es gibt einen beitrag in der bewerbungsares aber nicht erledigt
+          //es gibt einen beitrag in der bewerbungsares aber nicht erledigt und die differenz ist größer als erlaub
         } elseif ($stecki['threadsolved'] == 0 && $stecki['diff'] > $opt_bewerber_days) {
           eval("\$blacklist_ucp_bit .=\"" . $templates->get("blacklist_ucp_bewerber_bit") . "\";");
         }
@@ -640,22 +623,24 @@ function blacklist_edit_profile()
     $user = get_user($uid);
 
     if ($user['blacklist_ice'] == 1 && $thisuser != $uid) {
+      //einer der Charaktere des Users ist auf Eis gelegt
       $is_onice = true;
     }
   }
 
-  // {$blacklist_ucp_edit}
+  // Der Charakter ist das erste mal auf eis gelegt, also kann er auf eis gelegt werden. Option anzeigen
   if ($blacklist_ice == 0 && $since == "30.11.-0001") {
     $ice_input = "<p>
     <span class=\"smalltext\">Soll dieser Charakter auf Eis gelegt werden?<br/>
     <input type=\"checkbox\" class=\"bl\" name=\"blIce\" value=\"1\" /> ja</span>
     </p>";
-  } elseif ($blacklist_ice == 0 && $since != "30.11.-0001") {
+  } elseif ($blacklist_ice == 0 && $since != "30.11.-0001") { // Es ist ein Datum eingetragen (Kann nur in diesem Jahr sein, weil der Task (task/blacklist.php) das datum sonst automatisch geleert hat) 
     $ice_input = "<p>
     <span class=\"smalltext\">Sorry, es ist noch kein Jahr her, dass du diesen Charakter auf Eis gelegt hast.<br/>
     Das letzte Mal war am: <strong>" . $since . "</strong></span>
     </p>";
   } elseif ($blacklist_ice == 1) {
+    //Der Charakter liegt gerade wieder auf eis, man kann ihn auftauen
     $ice_input = "<p>
     <span class=\"smalltext\">Dein Charakter liegt seit dem <strong>" . $since . "</strong> auf Eis.<br/>
      <strong>Auftauen?</strong><br/></span>
@@ -663,7 +648,7 @@ function blacklist_edit_profile()
     <label for=\"blIce\">ja</label>
     </p>";
   }
-
+  //es darf nur ein Charakter auf Eis gelegt sein
   if ($is_onice) {
     $ice_input = "Sorry, du hast schon einen anderen Charakter auf Eis gelegt.";
   }
@@ -671,10 +656,12 @@ function blacklist_edit_profile()
   eval("\$blacklist_ucp_edit.=\"" . $templates->get("blacklist_ucp_edit") . "\";");
 }
 
+//Einstellungen des Users speichern
 $plugins->add_hook('usercp_do_profile_start', 'blacklist_edit_profile_do');
 function blacklist_edit_profile_do()
 {
   global $mybb, $db;
+  //Settings
   $thisuser = $mybb->user['uid'];
   $blacklistAlert_ice = intval($mybb->input['blIce']);
   if (intval($mybb->input['blIce']) == 1) {
@@ -692,19 +679,27 @@ function blacklist_edit_profile_do()
 
 /**
  * Die magische coole Blacklistausgabe
+ * Erreichbar über forenadresse misc.php?action=show_blacklist 
+ * Wenn inaktiv nur von Mods erreichbar, wenn auf aktiv gestellt auch von Usern 
  */
 $plugins->add_hook("misc_start", "blacklist_show");
 function blacklist_show()
 {
   global $mybb, $db, $templates, $blacklist_show_main, $active_yes, $active_no, $header, $footer, $theme, $headerinclude, $blacklist_show_view, $lang, $blacklist_show_userbitaway;
+  //für mein eigenes Hauspunkte Plugin
   if ($db->table_exists("hauspunke")) {
     $lang->load('hauspunkte');
   }
   $thisuser = intval($mybb->user['uid']);
   $showuser = $mybb->settings['blacklist_show_user'];
   $ismod = $mybb->usergroup['canmodcp'];
-  $blacklistpoints = $mybb->settings['hauspunkte_blacklist'];
+  //für mein eigenes Hauspunkte Plugin
+  if ($db->table_exists("hauspunke")) {
+    $blacklistpoints = $mybb->settings['hauspunkte_blacklist'];
+  }
+  
   $blacklist_user = $db->simple_select("blacklist", "*", "", array("order_by" => 'username'));
+  //Einen User manuell zur Blackliste hinzufügen. 
   if (isset($mybb->input['bl_add'])) {
     $value = intval($mybb->input['blactiv']);
     $username = $db->escape_string($mybb->input['bl_adduser']);
@@ -718,9 +713,13 @@ function blacklist_show()
     redirect("misc.php?action=show_blacklist");
   }
 
+  //Blacklist wird von Moderator veröffentlich
+  /*Mails verschicken, punkte abziehen etc*/ 
   if (isset($mybb->input['publish'])) {
     $value = intval($mybb->input['blactiv']);
+    //Für Meldung auf index
     $db->write_query("UPDATE " . TABLE_PREFIX . "users SET blacklist_view = '1'");
+    //Setting der blacklist auf aktiv stellen
     $db->write_query("UPDATE " . TABLE_PREFIX . "settings SET value = '" . $value . "' WHERE name='blacklist_show_user'");
     rebuild_settings();
     if ($value == 1) {
@@ -739,10 +738,11 @@ function blacklist_show()
         Solltest du diese Mail bekommen, obwohl du nicht auf der Blacklist stehst, darfst du diese sehr gerne einfach ignorieren :)<br/>
         
         Danke und liebe Grüße,<br/>
-        das Team des Golden Days";
+        das Team des {$forumname}";
+        //mail verschicken //TODO TESTEN!
         my_mail($user['email'], $subject, $message);
 
-        //Hauspunkte abziehen
+        //Hauspunkte abziehen mit katjas (risus) plugin, nur wenn installiert
         if ($db->table_exists("hauspunke")) {
           $db->write_query("UPDATE " . TABLE_PREFIX . "users SET hauspunkte_points = hauspunkte_points - {$blacklistpoints}");
           $insert = array(
@@ -762,6 +762,7 @@ function blacklist_show()
     redirect("misc.php?action=show_blacklist");
   }
 
+  //Streichen von der Blacklist
   if (isset($mybb->input['stroke'])) {
     $uid = intval($mybb->input['stroke']);
     $strokes = $db->fetch_field($db->simple_select("blacklist", "strokes_cnt", "uid = $uid"), "strokes_cnt");
@@ -778,8 +779,10 @@ function blacklist_show()
     redirect("misc.php?action=show_blacklist");
   }
 
-
+  //Blacklist anzeige -> misc.php?action=show_blacklist
   if ($mybb->input['action'] == "show_blacklist") {
+
+    //ist die Blacklist gerade aktiv und kann von user eingesehen werden?
     if ($showuser == 1) {
       $active_yes = "checked";
       $active_no = "";
@@ -787,13 +790,16 @@ function blacklist_show()
       $active_no = "checked";
       $active_yes = "";
     }
-
+    //user ist moderator
     if ($ismod == 1) {
+
+      //komplett von der blacklist löschen 
       if ($mybb->input['delete']) {
         $to_delete = intval($mybb->input['delete']);
         $db->delete_query("blacklist", "uid = {$to_delete}");
         redirect("misc.php?action=show_blacklist");
       }
+      // bauen der Blacklist
       while ($user = $db->fetch_array($blacklist_user)) {
         $uid = $user['uid'];
         $username = build_profile_link($user['username'], $uid);
@@ -811,12 +817,14 @@ function blacklist_show()
           $datestroke = "noch nie";
         }
         if ($showuser == 1) {
+          //User streichen (moderator)
           $stroke = "<a href=\"misc.php?action=show_blacklist&amp;stroke=" . $uid . "\" onClick=\"return confirm('Möchtest du " . $user['username'] . " wirklich streichen?');\">[streichen]</a> ";
         } else {
           $stroke = "";
         }
         eval("\$blacklist_show_userbitmod .= \"" . $templates->get("blacklist_show_userbitmod") . "\";");
       }
+      //Abwesende user/ User auf Eis 
       $away_user = $db->simple_select("users", "*", "away = 1 OR blacklist_ice = 1");
 
       while ($user = $db->fetch_array($away_user)) {
@@ -836,11 +844,14 @@ function blacklist_show()
       }
       eval("\$blacklist_show_view = \"" . $templates->get("blacklist_show_viewmod") . "\";");
     } elseif ($thisuser == 0) {
+      //Gäste dürfen die blacklist nicht sehen
       $blacklist_show_view = "<tr>
           <td class=\"trow1\" colspan=\"5\" align=\"center\"><span class=\"blacklist_text\">Gäste haben keinen Zugriff auf die Blacklist.</span></td>
         </tr>";
     } else {
+      //Angenommener user
       if ($showuser == 1) {
+        //Nur wenn Blacklist aktiv ist
         while ($user = $db->fetch_array($blacklist_user)) {
           $uid = $user['uid'];
           $username = build_profile_link($user['username'], $uid);
@@ -854,6 +865,7 @@ function blacklist_show()
             $datestroke = "noch nie";
           }
 
+          //Streichen wenn noch nicht das 3. Mal 
           if ($thisuser == $uid) {
             if ($user['strokes_cnt'] >= 2) {
               $stroke = "streichen nicht möglich";
@@ -869,6 +881,7 @@ function blacklist_show()
         }
         eval("\$blacklist_show_view = \"" . $templates->get("blacklist_show_viewuser") . "\";");
       } else {
+        //Blacklist ist gerade nicht aktiv
         $blacklist_show_view = "<tr>
         <td class=\"trow1\" colspan=\"5\" align=\"center\"><span class=\"blacklist_text\">Die Blacklist wird am 1. des Monats freigeschaltet.</span></td>
       </tr>";
@@ -879,6 +892,11 @@ function blacklist_show()
     output_page($blacklist_show_main);
   }
 }
+
+/**
+ * Anzeige auf dem Index, wenn die Blacklist gerade aktiv ist 
+ * //TODO ? Noch möglich machen wieder auszublenden? 
+ */
 $plugins->add_hook("index_start", "blacklist_index");
 function blacklist_index()
 {
@@ -929,12 +947,32 @@ $plugins->add_hook("newreply_do_newreply_end", "blacklist_do_newreply");
 function blacklist_do_newreply()
 {
   global $db, $pid, $mybb, $fid;
-  include "/inc/plugins/hauspunkte.php";
+  //TODO Lara :D bitte testen obs funktioniert musste ich umschreiben
+  //automatisches löschen von der BL, wenn neue antwort im ingame
+  $opt_bl_ingame = intval($mybb->settings['blacklist_ingame']);
   $uid = $mybb->user['uid'];
 
-  if (testParentFidHP($fid, "ingame")) {
+  $parents = $db->fetch_field($db->write_query("SELECT CONCAT(',',parentlist,',') as parents FROM " . TABLE_PREFIX . "forums WHERE fid = $fid"), "parents");
+  $ingame =  "," . $opt_bl_ingame . ",";
+  $containsIngame = strpos($parents, $ingame);
+
+  if ($containsIngame !== false) {
+    $ingameflag = true;
+  } else {
+    $ingameflag = false;
+  }
+
+  if ($ingameflag == true) {
     $db->delete_query("blacklist", "uid = {$uid}");
   }
+
+  
+  // include "/inc/plugins/hauspunkte.php";
+  // $uid = $mybb->user['uid'];
+
+  // if (testParentFidHP($fid, "ingame")) {
+  //   $db->delete_query("blacklist", "uid = {$uid}");
+  // }
 }
 
 /*#######################################
@@ -965,8 +1003,5 @@ function get_allcharsBL($thisuser)
 }
 
 /****
- * //TODO 
- * Modlist ->
- * Anzeige abwesend und auf eis
  * //TODO Sprachvariablen überprüfuen hauspunkte
  */
