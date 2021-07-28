@@ -11,6 +11,9 @@
 // error_reporting(-1);
 // ini_set('display_errors', true);
 
+//TODO Auf eis aktiviert, ja oder nein
+//TODO Gäste dürfen die bl sehen, ja oder nein
+
 /***
  * all the magic 
  * 
@@ -174,6 +177,10 @@ function task_blacklist($task)
             }
         }
     }
+
+    //meldung auf dem index bei allen Charas wieder anzeigen
+    $db->write_query("UPDATE " . TABLE_PREFIX . "users SET blacklist_view = '1'");
+
     add_task_log($task, "Blacklist Task erfolgreich ausgeführt.");
 }
 
@@ -187,17 +194,17 @@ function savebl($flag, $uid, $username, $tid, $date)
     if ($flag == 1) {
         $update = array(
             'uid' => $uid,
-            'username' => $username,
+            'username' => $db->escape_string($username),
             'tid' => $tid,
-            'date' => $date
+            'bldate' => $date
         );
         $db->update_query('blacklist', $update, "uid='" . $uid . "'");
     } else {
         $update = array(
             'uid' => $uid,
-            'username' => $username,
+            'username' => $db->escape_string($username),
             'tid' => $tid,
-            'date' => $date
+            'bldate' => $date
         );
         $db->insert_query('blacklist', $update);
     }
