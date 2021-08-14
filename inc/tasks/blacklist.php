@@ -11,7 +11,6 @@
 // error_reporting(-1);
 // ini_set('display_errors', true);
 
-//TODO Auf eis aktiviert, ja oder nein
 //TODO Gäste dürfen die bl sehen, ja oder nein
 
 /***
@@ -32,9 +31,13 @@ function task_blacklist($task)
     $opt_bewerber_days = intval($mybb->settings['blacklist_bewerberdauer']);
     $opt_steckiarea = intval($mybb->settings['blacklist_bewerberfid']);
 
+    $opt_ice = intval($mybb->settings['blacklist_ice']);
+    $opt_iceduration = intval($mybb->settings['blacklist_iceduration']);
+    $opt_icelock = intval($mybb->settings['blacklist_icelock']);
+    $opt_noaway = intval($mybb->settings['blacklist_noaway']);
 
     $build_string = "";
-    
+
     //gelten posts im Archiv ja/Nein?
     if ($opt_bl_archiv == 0) {
         $archiv = "";
@@ -54,20 +57,24 @@ function task_blacklist($task)
         if (!in_array($usergroup, $gids)) {
             $uid = $user['uid'];
             $username =  $user['username'];
-            
+
             //Der User ist auf Eis gelegt. 
             //abfangen, dass datum leer ist
-            if ($user['blacklist_ice_date'] != "0000-00-00 00:00:00") {
-                $icedate  = new DateTime(date($user['blacklist_ice_date']));
-                $interval = (array) date_diff($icedate, $today);
+            if ($opt_ice == 1) {
+                if ($user['blacklist_ice_date'] != "0000-00-00 00:00:00") {
+                    $icedate  = new DateTime(date($user['blacklist_ice_date']));
+                    $interval = (array) date_diff($icedate, $today);
 
-                // Ist er länger als 3 Monate auf Eis -> setze ihn automatisch wieder aktiv
-                if ($interval['days'] > 91) {
-                    $db->write_query("UPDATE " . TABLE_PREFIX . "users SET blacklist_ice = 0 WHERE uid = {$uid}");
-                }
-                if ($interval['days'] > 365) {
-                    //Ist das Datum der letzten auf Eissetzung ein Jahr her, darf wieder.
-                    $db->write_query("UPDATE " . TABLE_PREFIX . "users SET blacklist_ice_date = '' WHERE uid = {$uid}");
+                    // Ist er länger als 3 Monate auf Eis -> setze ihn automatisch wieder aktiv
+                    if ($interval['days'] > $opt_iceduration) {
+                        $db->write_query("UPDATE " . TABLE_PREFIX . "users SET blacklist_ice = 0 WHERE uid = {$uid}");
+                    }
+
+                    //Zeitraum in der der Charakter gesperrt ist
+                    if ($interval['days'] > $opt_icelock) {
+                        //Ist das Datum der letzten auf Eissetzung ein Jahr her, darf wieder.
+                        $db->write_query("UPDATE " . TABLE_PREFIX . "users SET blacklist_ice_date = '' WHERE uid = {$uid}");
+                    }
                 }
             }
 
@@ -75,10 +82,10 @@ function task_blacklist($task)
             $flag = $db->num_rows($db->simple_select("blacklist", "uid", "uid = {$uid}"));
 
             //Der Charakter ist Bewerber oder wartet auf aktivierung
-            //TODO Bewerbergruppe dynamisch
             if ($user['usergroup'] == $opt_bewerber || $user['usergroup'] == $opt_bewerber) {
                 $regdate = gmdate("Y-m-d H:i:s", $user['regdate']);
                 //Hole Threads aus der Bewerber area 
+
                 $get_stecki = $db->write_query("
                         SELECT *, datediff(FROM_UNIXTIME(dateline), '{$regdate}' ) as diff FROM 
                         " . TABLE_PREFIX . "threads WHERE uid = {$uid} and fid = {$opt_steckiarea}
@@ -139,17 +146,19 @@ function task_blacklist($task)
                             //muss auf die blackliste
                             savebl($flag, $uid, $username, $post['tid'], $post['date']);
                         }
-                        if (($user['away'] == 1 && $post['diff'] > 91)) {
+
+                        if (($user['away'] == 1 && $post['diff'] > $opt_noaway)) {
                             //user ist away, aber die 3 Monatsregel greift -> blacklist
                             savebl($flag, $uid, $username, $post['tid'], $post['date']);
                         }
+
                         if ($user['blacklist_ice'] == 1) {
                             //User ist auf Eis muss nicht auf blacklist
                             //löschen falls er letzten Monat drauf stand.
                             $db->delete_query("blacklist", "uid = {$uid}");
                         }
                     } else {
-                        //Der User hat in nötigen Zeitraum gepostet, sollte er letztes Mal draufgestanden haben, wird er gelöscht.
+                        //Der User hat im nötigen Zeitraum gepostet, sollte er letztes Mal draufgestanden haben, wird er gelöscht.
                         $db->delete_query("blacklist", "uid = {$uid}");
                     }
                     //gar kein Post im Ingame gefunden 
