@@ -1,25 +1,42 @@
-# blacklist
-automatic blacklist (WIP!)
-Achtung, das Plugin ist noch nicht durchgetestet und zu dem nicht vollkommen dynamisch. Einige Regeln sind im Code verankert und nicht übers acp steuerbar. 
+# automatische blacklist
+Achtung, das Plugin ist noch nicht komplett durchgetestet. Solltet ihr es installieren macht auf jedenfall vorher ein backup. 
 
-Noch nicht unbedingt für den Anfänger gebrauch geeignet ^^
-Bewerbergruppe ist noch nicht dynamisch, steht zur Zeit auf usergruppe '5' 
+# Was kann das Plugin?
+ - automatische Liste von Charakteren auf der Blacklist
+ - Berücksichtigung von Abwesenheit
+ - Möglichkeit Charaktere auf Eis zu legen
+ - Verwaltung der Blacklist __vor__ Veröffentlichung (manuelles hinzufügen und löschen) 
+ - Automatische Mail an Betroffene, wenn die BL veröffentlicht wird
+ - User können sich streichen (bis zu 2x, wird für die nächste BL gespeichert) 
+ - User werden automatisch von der BL gelöscht, wenn sie im Ingame gepostet haben
+ - Es kann ein Zeitraum festgelegt werden, in dem gepostet werden __muss__ und die Abwesenheit nicht mehr berücksichtigt wird
+ - Auf Eis legen kann auf Zeitraum beschränkt werden
+ - Auf Eis legen kann auf eine Anzahl von Charakteren pro User begrenzt werden
+ - Benutzergruppen können von der BL ausgeschlossen werden (z.B. NPCs)
+ 
+ # Installation
+1. Dateien aus dem Upload Ordner hochladen
+2. Einstellen wann die Blacklist ausgeführt werden soll (/admin/index.php?module=tools-tasks  -> blacklist task auswählen und datum einstellen wann er ausgeführt werden soll)
+3. Einstellungen der Blacklist vornehmen
 
--> Folgendes beachten:
-tasks/blacklist.php
-Hier wird die Blacklist und die Eisliste zurückgesetzt
-Hart rein gecodete Regeln, betreffend der Eisliste. Ein User darf seinen Charakter nur einmal im Jahr auf Eis legen und nur 3 Monate lang. Der Task regelt dies ab Zeile 57. Wenn es bei euch andewrs ist, müsst ihr das hier ändern
+# Funktionsweise / Ablauf / Handling
+Nachdem alles eingestellt wurde (siehe Punkt Installation) 
+Am Tag wenn die Blacklist ausgeführt wurde, kann ein Moderator sie verwalten.
+misc.php?action=show_blacklist  
+Es können Mitglieder hinzugefügt oder gelöscht werden.
 
-# Allgemein: 
-Das Plugin funktioniert nach folgendem Prinzip.
-Einmal im Monat 00:01 des 01. des Monats wird der Task ausgeführt und stellt die Blacklist in einer DB Tabelle zusammen. 
-User haben per Default erst einmal noch keinen Zugriff. Moderatoren können diese Blacklist schon einsehen.
-misc.php?action=show_blacklist 
+Erst wenn der Moderator/Admin die Blacklist veröffentlicht passiert folgendes:
+- Automatische Mail an die betroffenen Mitglieder wird verschickt
+- User können die Blacklist einsehen
+- User können sich selbst streichen (zur Zeit bis zu 3x)
 
-Sie können noch User manuell hinzufügen, oder User hinunternehmen. Es gibt außerdem eine Übersicht der abwesenden User (Über die Awayfunktion von Mybb), sowie die Charaktere die auf Eis gelegt sind (Pluginfunktion)
+Die Blacklist wird vom Moderator wieder versteckt, wenn sie nicht mehr gültig ist. (z.B. Nach einer Woche) 
+User müssen schließlich manuell gelöscht werden. 
 
-Erst wenn ein Moderator die Blacklist aktiviert, können nun auch User die Blacklist ansehen. (auch -> misc.php?action=show_blacklist). 
-User können sich selbst streichen, dann wird der stroke cnt hochgezählt (nur 2x mal hinteinander ohne post möglich)
-Postet der User oder erstellt eine neue Szene im Ingame, wird er automatisch von der Blacklist gelöscht. 
+# Was macht der Task genau?
+Bei der Ausführung trägt er in eine DB Tabelle (mybb_blacklist) die Mitglieder ein, die betroffen sind und löscht die Einträge von der letzten BL (es sei denn User haben sich gestrichen, dies wird gespeichert)
 
-Nach den 7 tagen (oder wie lang auch immer) muss die Blacklist wieder auf inaktiv gesetzt werden. 
+Auch die Eisliste wird berücksichtigt und Charaktere evt. wieder zurück auf nicht auf Eis gesetzt (je nach angebener Begrenzung im acp) 
+
+
+
