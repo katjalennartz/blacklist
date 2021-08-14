@@ -158,6 +158,14 @@ function blacklist_install()
       'value' => '365', // Default
       'disporder' => 12
     ),
+    //Wie oft im Jahr?
+    'blacklist_icenumber' => array(
+      'title' => 'Eisliste - Anzahl',
+      'description' => 'Wieviele Charaktere darf ein User auf Eis legen? 0 wenn unbeschränkt.',
+      "optionscode" => "numeric",
+      'value' => '1', // Default
+      'disporder' => 12
+    ),
     //ausgeschlossene user?
     'blacklist_excluded' => array(
       'title' => 'ausgeschlossene Benutzer',
@@ -412,8 +420,8 @@ function blacklist_install()
     'dateline'  => TIME_NOW
   );
   $db->insert_query("templates", $insert_array);
-  //TODO Meldung verbergen
-  //TODO Anzeige im Profil wenn Chara auf Eis
+  //TODO Meldung verbergen testen
+
 
   //Task, der einmal im Monat -> angegeben in Settins bl_info wieder zurücksetzt. 
   $db->insert_query('tasks', array(
@@ -633,7 +641,7 @@ function blacklist_usercp_show()
   eval("\$blacklist_ucp =\"" . $templates->get("blacklist_ucp") . "\";");
 }
 /**
- * Einstellungen die vom User im Profil gemacht werden können
+ * Einstellungen der Eisliste die vom User im Profil gemacht werden können
  */
 $plugins->add_hook('usercp_profile_start', 'blacklist_edit_profile');
 function blacklist_edit_profile()
@@ -641,6 +649,7 @@ function blacklist_edit_profile()
   global $mybb, $db, $templates, $blacklist_ucp_edit;
   //admin einstellungen
   $opt_ice = intval($mybb->settings['blacklist_ice']);
+  $opt_charnumber = intval($mybb->settings['blacklist_icenumber']);
 
   //das Spiel nur, wenn Charaktere auf Eis gelegt werden können
   if ($opt_ice == 1) {
@@ -648,7 +657,7 @@ function blacklist_edit_profile()
     $thisuser = intval($mybb->user['uid']);
     $blacklist_ice = intval($mybb->user['blacklist_ice']);
     $blacklist_date = ($mybb->user['blacklist_ice_date']);
-
+    $charcount = 0;
     //seit wann ist der Charakter auf ice?
     $since = date('d.m.Y', strtotime($blacklist_date));
     $is_away = false;
@@ -660,6 +669,7 @@ function blacklist_edit_profile()
       if ($user['blacklist_ice'] == 1 && $thisuser != $uid) {
         //einer der Charaktere des Users ist auf Eis gelegt
         $is_onice = true;
+        $charcount++;
       }
     }
 
@@ -684,9 +694,10 @@ function blacklist_edit_profile()
     </p>";
     }
     //es darf nur ein Charakter auf Eis gelegt sein
-    if ($is_onice) {
+    //TODO Test
+    if ($charcount >= $opt_charnumber) {
       $ice_input = "Sorry, du hast schon einen anderen Charakter auf Eis gelegt.";
-    }
+    } 
 
     eval("\$blacklist_ucp_edit.=\"" . $templates->get("blacklist_ucp_edit") . "\";");
   }
@@ -751,7 +762,7 @@ function blacklist_show()
     $db->insert_query("blacklist", $insert);
     redirect("misc.php?action=show_blacklist");
   }
-//TODO LINK WENN ALS USER EINGELOGGT DARSTELLUNG BLACKLIST
+  //TODO LINK WENN ALS USER EINGELOGGT DARSTELLUNG BLACKLIST
   //Blacklist wird von Moderator veröffentlich
   /*Mails verschicken, punkte abziehen etc*/
   if (isset($mybb->input['publish'])) {
@@ -768,7 +779,7 @@ function blacklist_show()
         $forumname = $db->escape_string($mybb->settings['bbname']);
         $username = $db->escape_string($user['$username']);
         $subject = "Blacklist " . $forumname;
-        $url = $mybb->settings['bburl'] ."/misc.php?action=show_blacklist";
+        $url = $mybb->settings['bburl'] . "/misc.php?action=show_blacklist";
         $message = "Hallo {$username}
         Diese Mail bekommen in der Regel nur die User, die auf der Blacklist gelandet sind. 
         Da du diese eMail gerade liest, solltest du dich, sofern du noch Interesse daran hast Mitglied im {$forumname} zu sein, 
@@ -781,7 +792,7 @@ function blacklist_show()
         das Team des {$forumname}
         {$mybb->settings['bburl']}";
 
-        my_mail($userinfo['email'], $subject, $message, $mybb->settings['adminemail'], null, null, null, "text", null, null);  
+        my_mail($userinfo['email'], $subject, $message, $mybb->settings['adminemail'], null, null, null, "text", null, null);
 
         //Hauspunkte abziehen mit katjas (risus) plugin, nur wenn installiert
         if ($db->table_exists("hauspunke")) {
@@ -985,7 +996,6 @@ function blacklist_do_newthread()
   if ($ingameflag == true) {
     $db->delete_query("blacklist", "uid = {$uid}");
   }
-
 }
 
 
@@ -1011,8 +1021,6 @@ function blacklist_do_newreply()
   if ($ingameflag == true) {
     $db->delete_query("blacklist", "uid = {$uid}");
   }
-
-
 }
 
 $plugins->add_hook("member_profile_start", "blacklist_viewOnIce");
