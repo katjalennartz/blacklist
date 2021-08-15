@@ -28,7 +28,7 @@ Es können Mitglieder hinzugefügt oder gelöscht werden.
 Erst wenn der Moderator/Admin die Blacklist veröffentlicht passiert folgendes:
 - Automatische Mail an die betroffenen Mitglieder wird verschickt
 - User können die Blacklist einsehen
-- User können sich selbst streichen (zur Zeit bis zu 3x)
+- User können sich selbst streichen (zur Zeit bis zu 2x) Beim 3. mal können sie sich selbst nicht noch einmal streichen.
 
 Die Blacklist wird vom Moderator wieder versteckt, wenn sie nicht mehr gültig ist. (z.B. Nach einer Woche) 
 User müssen schließlich manuell gelöscht werden. 
