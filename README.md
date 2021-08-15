@@ -15,7 +15,7 @@ Achtung, das Plugin ist noch nicht komplett durchgetestet. Solltet ihr es instal
  - Benutzergruppen können von der BL ausgeschlossen werden (z.B. NPCs)
  
  # Installation
-1. Dateien aus dem Upload Ordner hochladen
+1. Dateien aus dem Inc Ordner hochladen /inc/plugins/blacklist.php & inc/tasks/blacklist.php
 2. Einstellen wann die Blacklist ausgeführt werden soll (/admin/index.php?module=tools-tasks  -> blacklist task auswählen und datum einstellen wann er ausgeführt werden soll)
 3. Einstellungen der Blacklist vornehmen
 
