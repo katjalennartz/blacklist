@@ -39,4 +39,21 @@ Bei der Ausführung trägt er in eine DB Tabelle (mybb_blacklist) die Mitglieder
 Auch die Eisliste wird berücksichtigt und Charaktere evt. wieder zurück auf nicht auf Eis gesetzt (je nach angebener Begrenzung im acp) 
 
 
+# neue Templates
+- blacklist_show_main
+- blacklist_show_userbit
+- blacklist_show_userbitaway
+- blacklist_show_userbitmod
+- blacklist_show_viewmod
+- blacklist_show_viewuser
+- blacklist_ucp
+- blacklist_ucp_bewerber_bit
+- blacklist_ucp_bit_3month
+- blacklist_ucp_edit
+- blacklist_ucp_user_bit
+- blacklist_index_alert
 
+# genutzte Variablen
+- im header.tpl: {$blacklist_index} 
+- im usercp.tpl: {$blacklist_ucp}
+- im usercp_profile.tpl: {$blacklist_ucp_edit}
