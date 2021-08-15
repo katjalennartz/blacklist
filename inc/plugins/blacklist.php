@@ -762,7 +762,7 @@ function blacklist_show()
     $db->insert_query("blacklist", $insert);
     redirect("misc.php?action=show_blacklist");
   }
-  //TODO LINK WENN ALS USER EINGELOGGT DARSTELLUNG BLACKLIST
+
   //Blacklist wird von Moderator veröffentlich
   /*Mails verschicken, punkte abziehen etc*/
   if (isset($mybb->input['publish'])) {
@@ -910,7 +910,11 @@ function blacklist_show()
           $datestroke = date('d.m.y', strtotime($user['stroke_date_last']));
           $datemonth = date('m.y', strtotime($user['stroke_date_last']));
           $thismonth = date('m.y');
-
+          if ($user['tid'] == "0") {
+            $user['tid'] = "";
+          } else {
+            $user['tid'] = "<a href=\"showthread.php?tid={$user['tid']}&action=lastpost\">Link</a>";
+          }
           $datepost = date('d.m.y', strtotime($user['date']));
 
           if ($datestroke == "30.11.-1" || $datestroke == "01.01.70") {
