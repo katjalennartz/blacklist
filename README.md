@@ -18,6 +18,7 @@ Achtung, das Plugin ist noch nicht komplett durchgetestet. Solltet ihr es instal
 1. Dateien aus dem Inc Ordner hochladen /inc/plugins/blacklist.php & inc/tasks/blacklist.php
 2. Einstellen wann die Blacklist ausgeführt werden soll (/admin/index.php?module=tools-tasks  -> blacklist task auswählen und datum einstellen wann er ausgeführt werden soll)
 3. Einstellungen der Blacklist vornehmen
+4. (zum Testen kann der Task auch manuell ausgeführt werden -> /admin/index.php?module=tools-tasks auf die uhr beim Blacklisttask klicken ;) ) 
 
 # Funktionsweise / Ablauf / Handling
 Nachdem alles eingestellt wurde (siehe Punkt Installation) 
