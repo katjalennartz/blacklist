@@ -39,6 +39,13 @@ Bei der Ausführung trägt er in eine DB Tabelle (mybb_blacklist) die Mitglieder
 
 Auch die Eisliste wird berücksichtigt und Charaktere evt. wieder zurück auf nicht auf Eis gesetzt (je nach angebener Begrenzung im acp) 
 
+# Voraussetzungen 
+- Erweiterter Account Switcher von doylecc
+
+# Bugs / To Do
+- Autovervollständigung von Usernamen beim manuellen Hinzufügen
+- Doppeltes Hinzufügen abfangen
+- Anzahl des Streichens dynamisch machen
 
 # neue Templates
 - blacklist_show_main
