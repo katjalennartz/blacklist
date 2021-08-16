@@ -128,15 +128,15 @@ function task_blacklist($task)
             } else {
                 //Wir holen uns den neusten Post aus dem Ingame und Archiv
                 $get_posts = $db->query("SELECT *,FROM_UNIXTIME(dateline) as date, DATEDIFF(CURDATE(),FROM_UNIXTIME(dateline)) as diff FROM 
-            (SElECT uid, username, fid, tid, pid, dateline as dateline FROM  " . TABLE_PREFIX . "posts WHERE uid = {$uid} AND visible != '-2') as up 
+            (SElECT uid, username, fid, tid, pid, dateline as dateline FROM  " . TABLE_PREFIX . "posts WHERE uid = ".$uid." AND visible != '-2') as up 
               INNER JOIN
             (SELECT fid FROM " . TABLE_PREFIX . "forums WHERE concat(',',parentlist,',') LIKE '%," . $opt_bl_ingame . ",%' " . $archiv . ") as fids
             ON fids.fid = up.fid
               ORDER by dateline DESC
             LIMIT 1");
+                
                 // umwandeln in Array mit dem wir arbeiten können
                 $post = $db->fetch_array($get_posts);
-
                 //Gibt es einen Post?
                 if ($db->num_rows($get_posts)) {
                     // wenn es einen gibt, überprüfe ob er länger her ist als erlaubt ($post['diff'] enthält die Tage, von letzten post zu heute) 

@@ -420,20 +420,18 @@ function blacklist_install()
     'dateline'  => TIME_NOW
   );
   $db->insert_query("templates", $insert_array);
-  //TODO Meldung verbergen testen
-
 
   //Task, der einmal im Monat -> angegeben in Settins bl_info wieder zurücksetzt. 
   $db->insert_query('tasks', array(
     'title' => 'blacklist',
     'description' => 'Stellt einmal im Monat die Blacklist zusammen.',
     'file' => 'blacklist',
-    'minute' => '01',
-    'hour' => '00',
+    'minute' => '1',
+    'hour' => '0',
     'day' => '1',
     'month' => '*',
     'weekday' => '*',
-    'nextrun' => TIME_NOW,
+    'nextrun' => TIME_NOW + 60,
     'lastrun' => 0,
     'enabled' => 1,
     'logging' => 1,
@@ -762,7 +760,7 @@ function blacklist_show()
     $db->insert_query("blacklist", $insert);
     redirect("misc.php?action=show_blacklist");
   }
-
+  //TODO LINK WENN ALS USER EINGELOGGT DARSTELLUNG BLACKLIST
   //Blacklist wird von Moderator veröffentlich
   /*Mails verschicken, punkte abziehen etc*/
   if (isset($mybb->input['publish'])) {
