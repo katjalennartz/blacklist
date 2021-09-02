@@ -651,6 +651,7 @@ function blacklist_edit_profile()
 
   //das Spiel nur, wenn Charaktere auf Eis gelegt werden können
   if ($opt_ice == 1) {
+    echo "blablabla";
     //usereinstellungen
     $thisuser = intval($mybb->user['uid']);
     $blacklist_ice = intval($mybb->user['blacklist_ice']);
@@ -667,10 +668,12 @@ function blacklist_edit_profile()
       if ($user['blacklist_ice'] == 1 && $thisuser != $uid) {
         //einer der Charaktere des Users ist auf Eis gelegt
         $is_onice = true;
+        
         $charcount++;
       }
     }
-
+    echo "charcount". $charcount;
+    echo "opt_charnumber". $opt_charnumber;
     // Der Charakter ist das erste mal auf eis gelegt, also kann er auf eis gelegt werden. Option anzeigen
     if ($blacklist_ice == 0 && $since == "30.11.-0001") {
       $ice_input = "<p>
@@ -693,7 +696,7 @@ function blacklist_edit_profile()
     }
     //es darf nur ein Charakter auf Eis gelegt sein
     //TODO Test
-    if ($charcount >= $opt_charnumber) {
+    if ($charcount > $opt_charnumber) {
       $ice_input = "Sorry, du hast schon einen anderen Charakter auf Eis gelegt.";
     } 
 
